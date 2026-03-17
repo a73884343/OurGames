@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>لعبتنا معاً 💜</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- ===== SCREENS ===== -->
+
+<!-- INTRO -->
+<div class="screen active" id="screen-intro">
+  <div class="intro-bg"></div>
+  <div class="intro-content">
+    <div class="intro-logo">💜</div>
+    <h1>لعبتنا معاً</h1>
+    <p class="intro-sub">العب مع حبيبتك من أي مكان</p>
+    <div class="name-input-wrap">
+      <input type="text" id="player-name" placeholder="اكتب اسمك" maxlength="15" autocomplete="off">
+    </div>
+    <button class="btn-primary" onclick="goToLobby()">ابدأ</button>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div class="screen" id="screen-lobby">
+  <div class="lobby-header">
+    <div class="logo-sm">💜 لعبتنا معاً</div>
+    <div class="player-badge" id="lobby-name-badge"></div>
+  </div>
+  <div class="lobby-body">
+    <div class="lobby-card">
+      <div class="lcard-icon">🎮</div>
+      <h2>غرفة جديدة</h2>
+      <p>أنشئ غرفة وشارك الكود مع حبيبتك</p>
+      <button class="btn-primary" onclick="createRoom()">إنشاء غرفة</button>
+    </div>
+    <div class="lobby-divider">أو</div>
+    <div class="lobby-card">
+      <div class="lcard-icon">🔑</div>
+      <h2>انضم لغرفة</h2>
+      <p>أدخل الكود اللي أرسلته لك</p>
+      <input type="text" id="join-code" placeholder="كود الغرفة" maxlength="5" style="text-transform:uppercase">
+      <button class="btn-secondary" onclick="joinRoom()">انضم</button>
+    </div>
+  </div>
+</div>
+
+<!-- WAITING -->
+<div class="screen" id="screen-waiting">
+  <div class="waiting-content">
+    <div class="pulse-heart">💜</div>
+    <h2>في انتظار حبيبتك</h2>
+    <p>شارك هذا الكود معها</p>
+    <div class="room-code-display" id="room-code-display"></div>
+    <button class="btn-copy" onclick="copyCode()">نسخ الكود 📋</button>
+    <p class="waiting-hint">بمجرد انضمامها تنطلق الألعاب!</p>
+  </div>
+</div>
+
+<!-- MAIN GAME -->
+<div class="screen" id="screen-game">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-players">
+      <div class="player-chip" id="chip-me"></div>
+      <div class="vs-badge">VS</div>
+      <div class="player-chip partner" id="chip-partner"></div>
+    </div>
+    <div class="topbar-scores">
+      <span id="score-me">0</span>
+      <span class="score-sep">:</span>
+      <span id="score-partner">0</span>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('games')" id="tab-games">
+      <span>🎮</span> الألعاب
+    </div>
+    <div class="tab" onclick="switchTab('chat')" id="tab-chat">
+      <span>💬</span> الشات
+      <div class="chat-badge hidden" id="chat-badge">0</div>
+    </div>
+    <div class="tab" onclick="switchTab('daily')" id="tab-daily">
+      <span>✨</span> اليوم
+    </div>
+  </div>
+
+  <!-- TAB: GAMES -->
+  <div class="tab-content active" id="content-games">
+
+    <!-- GAME MENU -->
+    <div class="game-menu" id="game-menu">
+      <div class="game-item" onclick="startGame('quiz')">
+        <div class="game-item-icon">🧠</div>
+        <div class="game-item-info">
+          <div class="game-item-name">اختبار ثقافي</div>
+          <div class="game-item-desc">تنافسوا على الأسئلة في نفس الوقت</div>
+        </div>
+        <div class="game-item-type challenge">تنافس</div>
+      </div>
+      <div class="game-item" onclick="startGame('describe')">
+        <div class="game-item-icon">🗣️</div>
+        <div class="game-item-info">
+          <div class="game-item-name">وصف وخمّن</div>
+          <div class="game-item-desc">واحد يوصف والثاني يخمن</div>
+        </div>
+        <div class="game-item-type coop">تعاون</div>
+      </div>
+      <div class="game-item" onclick="startGame('puzzle')">
+        <div class="game-item-icon">🧩</div>
+        <div class="game-item-info">
+          <div class="game-item-name">تركيب الصور</div>
+          <div class="game-item-desc">رتبوا القطع سوا</div>
+        </div>
+        <div class="game-item-type coop">تعاون</div>
+      </div>
+    </div>
+
+    <!-- QUIZ GAME -->
+    <div class="game-area hidden" id="area-quiz">
+      <div class="game-header">
+        <button class="btn-back" onclick="backToMenu()">← رجوع</button>
+        <div class="game-progress">
+          <span id="quiz-index">1</span> / <span id="quiz-total">8</span>
+        </div>
+        <div class="score-live">نقاطك: <b id="quiz-my-score">0</b></div>
+      </div>
+      <div class="quiz-waiting hidden" id="quiz-waiting">
+        <div class="spinner">⏳</div>
+        <p>في انتظار بدء اللعبة من أحدكم</p>
+        <button class="btn-primary" onclick="socket.emit('start_quiz')">ابدأ الاختبار</button>
+      </div>
+      <div class="quiz-active hidden" id="quiz-active">
+        <div class="quiz-question" id="quiz-question"></div>
+        <div class="quiz-options" id="quiz-options"></div>
+        <div class="quiz-answered hidden" id="quiz-answered">
+          <div class="answered-icon" id="answered-icon"></div>
+          <p id="answered-text"></p>
+        </div>
+      </div>
+      <div class="quiz-end hidden" id="quiz-end">
+        <div class="end-trophy">🏆</div>
+        <h2 id="end-title"></h2>
+        <div class="end-scores" id="end-scores"></div>
+        <button class="btn-primary" onclick="socket.emit('start_quiz')">جولة جديدة</button>
+        <button class="btn-secondary" onclick="backToMenu()">القائمة الرئيسية</button>
+      </div>
+    </div>
+
+    <!-- DESCRIBE GAME -->
+    <div class="game-area hidden" id="area-describe">
+      <div class="game-header">
+        <button class="btn-back" onclick="backToMenu()">← رجوع</button>
+        <h3>وصف وخمّن</h3>
+      </div>
+      <div class="describe-waiting" id="describe-waiting">
+        <p>لعبة تعاونية — واحد يوصف الكلمة بدون ما يقولها، والثاني يخمن!</p>
+        <button class="btn-primary" onclick="socket.emit('start_describe')">ابدأ اللعبة</button>
+      </div>
+      <div class="describe-active hidden" id="describe-active">
+        <div class="describe-role" id="describe-role-badge"></div>
+        <div class="describe-word hidden" id="describe-word-area">
+          <p>الكلمة:</p>
+          <div class="word-display" id="describe-word-text"></div>
+          <p class="hint-text">صف الكلمة لحبيبتك بدون ما تقولها مباشرة!</p>
+        </div>
+        <div class="describe-guess-area hidden" id="describe-guess-area">
+          <p>حبيبك/حبيبتك يوصف كلمة.. خمّنها!</p>
+          <input type="text" id="guess-input" placeholder="اكتب تخمينك" autocomplete="off">
+          <button class="btn-primary" onclick="sendGuess()">أرسل التخمين</button>
+          <p id="guess-feedback" class="guess-fb"></p>
+        </div>
+        <div class="describe-result hidden" id="describe-result">
+          <div class="result-icon">🎉</div>
+          <p id="describe-result-text"></p>
+          <button class="btn-primary" onclick="socket.emit('start_describe')">جولة جديدة</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PUZZLE GAME -->
+    <div class="game-area hidden" id="area-puzzle">
+      <div class="game-header">
+        <button class="btn-back" onclick="backToMenu()">← رجوع</button>
+        <h3>تركيب الصور</h3>
+      </div>
+      <div class="puzzle-waiting" id="puzzle-waiting">
+        <p>رتبوا القطع بالترتيب الصحيح سوا!</p>
+        <button class="btn-primary" onclick="socket.emit('start_puzzle')">ابدأ اللغز</button>
+      </div>
+      <div class="puzzle-active hidden" id="puzzle-active">
+        <p class="puzzle-hint">رتب القطع بالضغط عليها بالترتيب الصحيح</p>
+        <div class="puzzle-grid" id="puzzle-grid"></div>
+        <div class="puzzle-slots" id="puzzle-slots"></div>
+        <button class="btn-primary" onclick="submitPuzzle()">تأكيد الترتيب</button>
+        <p id="puzzle-feedback" class="guess-fb"></p>
+      </div>
+      <div class="puzzle-solved hidden" id="puzzle-solved">
+        <div class="result-icon">🎊</div>
+        <h2>حللتوه سوا!</h2>
+        <button class="btn-primary" onclick="socket.emit('start_puzzle')">لغز جديد</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TAB: CHAT -->
+  <div class="tab-content" id="content-chat">
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="chat-input-bar">
+      <input type="text" id="chat-input" placeholder="اكتب رسالة..." maxlength="200" onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="chat-send" onclick="sendChat()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- TAB: DAILY -->
+  <div class="tab-content" id="content-daily">
+    <div class="daily-wrap">
+      <div class="daily-card challenge-card">
+        <div class="daily-icon">🎯</div>
+        <h3>تحدي اليوم</h3>
+        <p id="daily-challenge">جاري التحميل...</p>
+      </div>
+      <div class="daily-card question-card">
+        <div class="daily-icon">🌟</div>
+        <h3>سؤال اليوم</h3>
+        <p id="daily-question-text">جاري التحميل...</p>
+        <div class="daily-opts" id="daily-opts"></div>
+        <p id="daily-answer" class="daily-answer hidden"></p>
+      </div>
+      <div class="daily-card mood-card">
+        <div class="daily-icon">❤️</div>
+        <h3>مزاجك الحين؟</h3>
+        <div class="mood-btns">
+          <button onclick="sendMood('😍')">😍</button>
+          <button onclick="sendMood('😊')">😊</button>
+          <button onclick="sendMood('😴')">😴</button>
+          <button onclick="sendMood('🥺')">🥺</button>
+          <button onclick="sendMood('😂')">😂</button>
+        </div>
+        <p id="mood-sent" class="mood-sent hidden">أُرسل مزاجك! 💌</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
